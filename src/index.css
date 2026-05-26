@@ -1,0 +1,21 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #080b12;
+  color: #e0e0e0;
+  font-family: 'Georgia', serif;
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0f1420; }
+::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 3px; }
+
+input, textarea, select {
+  font-family: 'Segoe UI', sans-serif;
+}
+
+button {
+  font-family: 'Segoe UI', sans-serif;
+  cursor: pointer;
+}

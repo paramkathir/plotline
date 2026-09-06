@@ -1,73 +1,112 @@
-# React + TypeScript + Vite
+# PlotLine
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+PlotLine is an AI-powered interactive fiction app where users define a world, protagonist, genre, and tone, then shape the story through branching choices. Generated scenes are saved so stories can be resumed later.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Create custom stories with a title, genre, protagonist, world, and tone
+- Generate immersive scenes with Claude through a FastAPI backend
+- Receive three meaningful choices at the end of each generated scene
+- Continue the narrative based on the user's selected choice
+- Preserve previous scenes and choices as context for future generation
+- Save stories and scenes in Supabase
+- Resume or delete previously created stories
+- Anonymous Supabase authentication with persistent sessions
+- Dark, reading-focused interface built for interactive fiction
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Frontend
 
-## Expanding the ESLint configuration
+- React 19
+- TypeScript
+- Vite
+- Supabase
+- Lucide React
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Backend
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Python
+- FastAPI
+- Anthropic API
+- Pydantic
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Architecture
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+React + TypeScript frontend
+        |
+        | POST /scene
+        v
+FastAPI backend
+        |
+        | prompt + story history
+        v
+Anthropic Claude
+        |
+        | generated scene + 3 choices
+        v
+Frontend
+        |
+        v
+Supabase (stories, scenes, choices)
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+When a user starts a story, PlotLine saves the story configuration in Supabase. The frontend sends the current story history and selected choice to the FastAPI `/scene` endpoint. The backend builds a structured prompt, requests the next scene from Claude, parses the JSON response, and returns the scene text and three choices. Generated scenes and selected choices are persisted so the story can be resumed later.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Run Locally
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Frontend
+
+Install dependencies:
+
+```bash
+npm install
 ```
+
+Create a `.env` file with the required configuration:
+
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_ANTHROPIC_KEY=your_anthropic_api_key
+```
+
+Start the frontend:
+
+```bash
+npm run dev
+```
+
+### Backend
+
+Install the Python dependencies required by `server/main.py`, including FastAPI, Uvicorn, Anthropic, python-dotenv, and Pydantic. Then run the API from the `server` directory:
+
+```bash
+uvicorn main:app --reload --port 8000
+```
+
+The frontend sends scene-generation requests to `http://localhost:8000/scene`.
+
+## Project Structure
+
+```text
+plotline/
+├── server/
+│   └── main.py
+├── src/
+│   ├── components/
+│   │   ├── Landing.tsx
+│   │   ├── MyStories.tsx
+│   │   ├── Setup.tsx
+│   │   └── Story.tsx
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── supabase.ts
+├── package.json
+└── vite.config.ts
+```
+
+## Story Generation
+
+Each request includes the story's genre, protagonist, world, tone, previous scenes, and latest user choice. The backend instructs Claude to generate 3 to 5 paragraphs, end at a decision point, and return exactly three distinct choices in a structured JSON response.
